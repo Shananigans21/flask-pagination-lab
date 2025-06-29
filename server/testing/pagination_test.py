@@ -1,20 +1,19 @@
 import os
 import pytest
-from app import create_app, db
+from config import create_app, db
 from models import Book
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_client():
-    os.environ["FLASK_ENV"] = "test"
-    test_app = create_app("test")
+    app = create_app("test")
+    # Register your resources explicitly here (since api.init_app only initializes Api, doesn't add routes)
+    from app import BookResource, Books
+    api.add_resource(BookResource, '/book/<int:book_id>', endpoint='book')
+    api.add_resource(Books, '/books', endpoint='books')
 
-    with test_app.test_client() as client:
-        with test_app.app_context():
-            db.create_all()
-            seed_test_data()
-        yield client
-        with test_app.app_context():
-            db.drop_all()
+    with app.test_client() as client:
+        with app.app_context():
+            yield client
 
 
 def seed_test_data():
